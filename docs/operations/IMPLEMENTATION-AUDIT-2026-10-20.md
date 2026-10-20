@@ -14,20 +14,20 @@ Read-only audit of GitHub repository metadata/files, Neon project/branches/table
 - Connected Render workspace found: `HAJI TRAVEL OS`; no services were returned for that workspace. This workspace is unrelated by name, so no service was created there and no deploy was triggered.
 - Latest GitHub commit status query returned no status checks. This is not proof of a successful build.
 
-## Committed documentation and schema draft
+## Committed documentation and schema migration
 - `docs/product/PROJECT-SUMMARY-V2.md`
 - `docs/architecture/BLUEPRINT-TEKNIS-V2.md`
 - `docs/product/PROPOSAL-RESMI-V2.md`
 - `docs/architecture/AI-MULTI-AGENT-CONTRACTS.md`
 - `database/migrations/002_legal_knowledge_ai_foundation.sql`
 
-The new SQL file is a draft additive migration only. It has NOT been applied to Neon. Before applying it, verify foreign-key assumptions (especially `organizations.id` and `app_users.id`), execute on a non-production branch, test rollback/repeatability, and compare with existing migration conventions.
+The additive migration was applied successfully twice (idempotency check) to Neon branch `br-square-hill-b5ac3t1i` (`development-work`), database `neondb`; the eight new legal/AI tables were verified afterward. It has NOT been applied to production. The first run and repeat run completed without SQL errors. Before production rollout, compare with the repository migration conventions, review data ownership/RLS and foreign-key assumptions, and add application-level integration tests.
 
 ## Blockers / next engineering tasks
 1. Run GitHub Actions and confirm a green build; status query currently has no checks.
 2. Confirm Neon Auth integration; current Auth inspection request failed, so auth state is unknown.
 3. Verify migration 001 path/content and align migration runner.
-4. Test migration 002 on a temporary/development branch; do not apply to production until review.
+4. Add integration tests, row-level/tenant authorization strategy and source-ingestion review before production migration; do not apply to production until review.
 5. Add actual source registry/admin workflows, authorized ingestion adapters, RAG/citation verification, agent orchestration and reviewer queue.
 6. Implement companion inbox and aftercare queue with consent, opt-out, idempotency and hard day-90 cutoff.
 7. Select an SIJPH-specific hosting target. Do not deploy into the unrelated HAJI TRAVEL OS workspace without explicit scope/authorization.
