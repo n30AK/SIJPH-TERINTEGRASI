@@ -38,6 +38,7 @@ echo "Exporting application and database images..."
 docker save -o "$STAGE/images.tar" "$APP_IMAGE" "$DB_IMAGE"
 
 cp compose.yaml "$STAGE/compose.yaml"
+cp compose.cloud.yaml "$STAGE/compose.cloud.yaml"
 cp -R database "$STAGE/database"
 mkdir -p "$STAGE/scripts"
 cp scripts/install-offline-bundle.sh "$STAGE/scripts/install-offline-bundle.sh"
@@ -54,7 +55,7 @@ MANIFEST
 
 (
   cd "$STAGE"
-  sha256sum images.tar compose.yaml RELEASE-MANIFEST.txt SELF-HOSTED-DEPLOYMENT.md OFFLINE-INSTALLER-RUNBOOK.md scripts/install-offline-bundle.sh > SHA256SUMS
+  sha256sum images.tar compose.yaml compose.cloud.yaml RELEASE-MANIFEST.txt SELF-HOSTED-DEPLOYMENT.md OFFLINE-INSTALLER-RUNBOOK.md scripts/install-offline-bundle.sh > SHA256SUMS
   find database -type f -print0 | sort -z | xargs -0 sha256sum >> SHA256SUMS
 )
 ARCHIVE="$OUT_DIR/sijph-terintegrasi-offline-$VERSION.tar.gz"
