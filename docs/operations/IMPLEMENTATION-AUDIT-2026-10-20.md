@@ -1,13 +1,13 @@
 # Implementation Audit — 20 October 2026
 
 ## Scope
-Read-only audit of GitHub repository metadata/files, Neon project/branches/tables, and connected Render workspace/services. No production SQL was executed and no deployment was triggered.
+Initial audit was read-only. Follow-up work applied additive legal/AI migrations 002–004 to Neon production after successful development-branch verification. No deployment was triggered.
 
 ## Confirmed
 - GitHub repository: https://github.com/n30AK/SIJPH-TERINTEGRASI, public, default branch `main`, write permission confirmed.
 - Neon project: `empty-sky-04023805`, name SIJPH-TERINTEGRASI.
 - Neon branches: `production` (`br-polished-paper-b5jkz6lz`, ready/default); `development-work` (`br-square-hill-b5ac3t1i`, ready); `development` (`br-lucky-recipe-b5bk9hcz`, ready). Note: the documented development ID maps to branch name `development-work`, not `development`.
-- Neon production tables observed: `app_users`, `audit_events`, `clients`, `notifications`, `organizations`, `privacy_consents`, `queue_counters`, `queue_tickets`, `roles`, `service_catalog`, `service_request_events`, `service_requests`, `signage_items`, `signage_screens`, `user_roles` (15 tables).
+- Neon production originally had 15 core tables. After migration 002–004, production was verified at 24 public tables, including legal source/document/version/provision/relationship/ingestion/citation tables and AI analysis/scenario tables.
 - Package uses Next.js 15, React 19, TypeScript, pg, Zod and lucide-react.
 - CI workflow `.github/workflows/ci.yml` runs npm install, typecheck and build, with a build-time placeholder DATABASE_URL.
 - `app/api/health/route.ts` checks DATABASE_URL and runs SELECT 1 with a PostgreSQL pool.
@@ -21,16 +21,16 @@ Read-only audit of GitHub repository metadata/files, Neon project/branches/table
 - `docs/architecture/AI-MULTI-AGENT-CONTRACTS.md`
 - `database/migrations/002_legal_knowledge_ai_foundation.sql`
 
-The additive migration was applied successfully twice (idempotency check) to Neon branch `br-square-hill-b5ac3t1i` (`development-work`), database `neondb`; the eight new legal/AI tables were verified afterward. It has NOT been applied to production. The first run and repeat run completed without SQL errors. Before production rollout, compare with the repository migration conventions, review data ownership/RLS and foreign-key assumptions, and add application-level integration tests.
+The additive migration 002 was applied successfully twice (idempotency check) to Neon branch `br-square-hill-b5ac3t1i` (`development-work`), database `neondb`. After that verification, migrations 002–004 were applied to production branch `br-polished-paper-b5jkz6lz`; production now has 24 public tables, four active global primary-source registry entries, four active service catalog entries, and the global source-key unique index. The migrations are additive; no legal document contents were ingested. Application-level integration tests and production RBAC/authentication are still required.
 
 ## Blockers / next engineering tasks
 1. Run GitHub Actions and confirm a green build; status query currently has no checks.
 2. Confirm Neon Auth integration; current Auth inspection request failed, so auth state is unknown.
 3. Verify migration 001 path/content and align migration runner.
-4. Add integration tests, row-level/tenant authorization strategy and source-ingestion review before production migration; do not apply to production until review.
+4. Complete integration tests and a tenant authorization strategy; production schema migration is now applied, but application production use remains gated.
 5. Add actual source registry/admin workflows, authorized ingestion adapters, RAG/citation verification, agent orchestration and reviewer queue.
 6. Implement companion inbox and aftercare queue with consent, opt-out, idempotency and hard day-90 cutoff.
-7. Select an SIJPH-specific hosting target. Do not deploy into the unrelated HAJI TRAVEL OS workspace without explicit scope/authorization.
+7. Select an SIJPH-specific hosting target. Vercel team discovery returned no available teams, and the only visible Render workspace is unrelated (`HAJI TRAVEL OS`); no host has been created or deployed.
 8. Obtain a public URL only after deployment and health/smoke checks pass.
 
 ## Status classification
@@ -49,3 +49,12 @@ The additive migration was applied successfully twice (idempotency check) to Neo
 - CI run status for the latest API commit was not available through the connected workflow-run query; build/typecheck must still be confirmed.
 
 - Added `POST /api/admin/legal/documents`: transactionally inserts document metadata, a pending version, and provision text after schema validation. New content defaults to `unverified`/ `pending`; no automatic legal verification is performed.
+
+
+## Follow-up implementation — commercial readiness gate
+- Added `GET /api/ready`, which returns 200 only when database connection/schema, four active service entries, server admin secret, controller name, privacy contact/version, and public intake flag are configured. It does not expose secret values.
+- Public intake now refuses submissions unless `PUBLIC_INTAKE_ENABLED=true` and controller/privacy environment values are configured. Consent records use the configured `PRIVACY_NOTICE_VERSION`, not a hard-coded development version.
+- Privacy page now reads controller/contact/version from server environment and visibly warns when these values are missing.
+- Added `.env.example`, commercial go-live checklist, and CI lint step. The readiness SQL expression was directly tested against production and all 19 required table names resolved successfully.
+- Production migration verification result: 24 public tables, four global sources, four active primary official source entries, four active service catalog entries, and the global unique index.
+- Remaining launch blockers: hosting account/domain access, host environment secrets, green CI/build verification, privacy notice approval, abuse/rate-limit controls, individual authentication/RBAC and audit attribution, and tested operational workflows. The site is not yet verified live or commercially ready.
