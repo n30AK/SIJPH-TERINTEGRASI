@@ -30,7 +30,16 @@ export async function POST(request: Request) {
   if (!client) return NextResponse.json({ error: "Database belum tersedia." }, { status: 503 });
   try {
     await client.query("BEGIN");
-    const reviewer = await client.query("SELECT id FROM app_users WHERE id = $1 LIMIT 1", [data.reviewerUserId]);
+    const reviewer = await client.query(
+      `SELECT u.id FROM app_users u
+       WHERE u.id = $1 AND u.status = 'active'
+         AND EXISTS (
+           SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+           WHERE ur.user_id = u.id AND r.code IN ('reviewer', 'admin', 'super_admin')
+         )
+       LIMIT 1`,
+      [data.reviewerUserId]
+    );
     if (!reviewer.rowCount) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Reviewer tidak ditemukan." }, { status: 422 });
@@ -69,6 +78,11 @@ export async function POST(request: Request) {
        WHERE id = $1
        RETURNING id, title, legal_status, status_verified_at, effective_until, canonical_url`,
       [data.documentId, data.legalStatus, data.effectiveUntil ?? null]
+    );
+    await client.query(
+      `INSERT INTO audit_events (actor_user_id, action, entity_type, entity_id, metadata)
+       VALUES ($1, 'legal.document.status_verified', 'legal_document', $2, $3::jsonb)`,
+      [data.reviewerUserId, data.documentId, JSON.stringify({ versionId: data.versionId, legalStatus: data.legalStatus })]
     );
     await client.query("COMMIT");
     return NextResponse.json({
