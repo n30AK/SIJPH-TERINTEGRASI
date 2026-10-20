@@ -25,6 +25,9 @@ export async function POST(request: Request) {
   if (process.env.PUBLIC_INTAKE_ENABLED !== "true") {
     return NextResponse.json({ error: "Permohonan online belum diaktifkan oleh pengelola. Silakan hubungi kanal resmi organisasi." }, { status: 503 });
   }
+  if (!process.env.PRIVACY_NOTICE_VERSION?.trim() || !process.env.DATA_CONTROLLER_NAME?.trim() || !process.env.PRIVACY_CONTACT_EMAIL?.trim()) {
+    return NextResponse.json({ error: "Pemberitahuan privasi belum dikonfigurasi oleh pengelola; penerimaan data sementara dinonaktifkan." }, { status: 503 });
+  }
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (contentLength > 20_000) return NextResponse.json({ error: "Ukuran permohonan terlalu besar." }, { status: 413 });
   let input: unknown;
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
       const reference = "SJ-" + new Date().toISOString().slice(0, 10).replaceAll("-", "") + "-" + crypto.randomUUID().slice(0, 8).toUpperCase();
       await client.query(
         "INSERT INTO privacy_consents (client_id, purpose, notice_version, source) VALUES ($1, $2, $3, 'public_web')",
-        [clientInsert.rows[0].id, "initial_service_request_review", "development-v1"]
+        [clientInsert.rows[0].id, "initial_service_request_review", process.env.PRIVACY_NOTICE_VERSION]
       );
       const result = await client.query(
         "INSERT INTO service_requests (reference_no, client_id, service_id, title, description, channel, status) VALUES ($1, $2, $3, $4, $5, 'web', 'submitted') RETURNING id, reference_no, status, created_at",
