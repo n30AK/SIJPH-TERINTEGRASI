@@ -37,3 +37,13 @@ The additive migration was applied successfully twice (idempotency check) to Neo
 - **Verified:** repository exists and is writable; Neon project/branches/tables listed; baseline files and current package scripts inspected.
 - **Committed, not runtime-tested:** three v2.0 docs, multi-agent contracts, draft legal knowledge/AI schema migration.
 - **Not verified/active:** green CI, live hosting, public URL, Neon Auth configuration, production application-to-Neon connectivity, legal ingestion, RAG, AI multi-agent runtime, human review, Companion and aftercare.
+
+
+## Follow-up implementation — legal registry API
+- Added protected API routes: `GET/POST /api/admin/legal/sources` and `POST /api/admin/legal/search`.
+- Added server-only database pool helper and `SIJPH_ADMIN_API_KEY` guard. Admin endpoints require `x-sijph-admin-key`; the secret must be configured only in hosting/server environment.
+- Search defaults to primary official sources, versions marked verified, documents marked in force, and status checks within 180 days. This is a conservative filter, not a guarantee of legal correctness or completeness.
+- Added migration `003_seed_official_legal_sources.sql` for four official source endpoints and `004_legal_source_global_uniqueness.sql` to make global registry keys unique.
+- Applied migrations 003 and 004 to Neon `development-work`; verified four source records and the unique expression index. Migration 003 was re-run and still returned four global source records (idempotency check).
+- No bulk crawling/ingestion, RAG embeddings, model provider, AI analysis runtime, human review UI, auth integration, or production deployment is claimed as complete.
+- CI run status for the latest API commit was not available through the connected workflow-run query; build/typecheck must still be confirmed.
