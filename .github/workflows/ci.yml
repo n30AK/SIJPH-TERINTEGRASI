@@ -5,9 +5,13 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: sijph-ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,3 +24,5 @@ jobs:
         env:
           # Build-time placeholder only; production must use hosting secrets.
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/sijph
+      - name: Verify production container builds
+        run: docker build --tag sijph-terintegrasi:ci .
