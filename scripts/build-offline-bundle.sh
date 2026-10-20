@@ -17,6 +17,10 @@ for tool in tar sha256sum; do
 done
 
 VERSION="${1:-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)}"
+if [[ ! "$VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "ERROR: Version may contain only letters, numbers, dot, underscore, and hyphen." >&2
+  exit 1
+fi
 OUT_DIR="${2:-$ROOT_DIR/dist/offline}"
 mkdir -p "$OUT_DIR"
 STAGE="$(mktemp -d)"
@@ -38,6 +42,7 @@ cp -R database "$STAGE/database"
 mkdir -p "$STAGE/scripts"
 cp scripts/install-offline-bundle.sh "$STAGE/scripts/install-offline-bundle.sh"
 cp docs/operations/SELF-HOSTED-DEPLOYMENT.md "$STAGE/SELF-HOSTED-DEPLOYMENT.md"
+cp docs/operations/OFFLINE-INSTALLER-RUNBOOK.md "$STAGE/OFFLINE-INSTALLER-RUNBOOK.md"
 cat > "$STAGE/RELEASE-MANIFEST.txt" <<MANIFEST
 Product: SIJPH-TERINTEGRASI
 Bundle version: $VERSION
@@ -49,7 +54,7 @@ MANIFEST
 
 (
   cd "$STAGE"
-  sha256sum images.tar compose.yaml RELEASE-MANIFEST.txt SELF-HOSTED-DEPLOYMENT.md scripts/install-offline-bundle.sh > SHA256SUMS
+  sha256sum images.tar compose.yaml RELEASE-MANIFEST.txt SELF-HOSTED-DEPLOYMENT.md OFFLINE-INSTALLER-RUNBOOK.md scripts/install-offline-bundle.sh > SHA256SUMS
   find database -type f -print0 | sort -z | xargs -0 sha256sum >> SHA256SUMS
 )
 ARCHIVE="$OUT_DIR/sijph-terintegrasi-offline-$VERSION.tar.gz"
