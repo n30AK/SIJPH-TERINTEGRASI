@@ -90,6 +90,22 @@ jobs:
           ticket_three="$(curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}')"
           ticket_three_no="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.ticket_no)' "$ticket_three")"
           test "$ticket_three_no" = "003"
+          # Concurrent requests must receive distinct sequential numbers under the advisory lock.
+          pids=()
+          for i in 1 2 3 4 5; do
+            curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}' > "/tmp/sijph-ticket-concurrent-$i.json" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          node -e '
+            const fs = require("node:fs");
+            const nums = [1,2,3,4,5].map(i => JSON.parse(fs.readFileSync("/tmp/sijph-ticket-concurrent-" + i + ".json", "utf8")).ticket.ticket_no).sort();
+            const expected = ["004","005","006","007","008"];
+            if (JSON.stringify(nums) !== JSON.stringify(expected)) {
+              console.error({ expected, actual: nums });
+              process.exit(1);
+            }
+          '
           invalid_transition_status="$(curl --silent --show-error -o /tmp/sijph-invalid-transition.json -w '%{http_code}' -X PATCH http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d "{\"ticketId\":\"$ticket_one_id\",\"action\":\"complete\"}")"
           test "$invalid_transition_status" = "409"
           echo "Compose stack healthy; PostgreSQL connected; queue numbering and invalid-transition API smoke tests passed."
