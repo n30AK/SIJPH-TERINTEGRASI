@@ -11,7 +11,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,4 +47,30 @@ jobs:
           SIJPH_IMAGE=sijph-terintegrasi:ci
           ENVVARS
           docker compose config --quiet
-          rm -f .env
+          docker compose up -d
+          cleanup() {
+            rc=$?
+            if [ "$rc" -ne 0 ]; then
+              docker compose ps || true
+              docker compose logs --tail=200 || true
+            fi
+            docker compose down -v || true
+            rm -f .env
+            exit "$rc"
+          }
+          trap cleanup EXIT
+          app_id=""
+          healthy=""
+          for attempt in $(seq 1 60); do
+            app_id="$(docker compose ps -q app)"
+            if [ -n "$app_id" ]; then
+              healthy="$(docker inspect --format '{{.State.Health.Status}}' "$app_id" 2>/dev/null || true)"
+              if [ "$healthy" = "healthy" ]; then
+                break
+              fi
+            fi
+            sleep 2
+          done
+          test "$healthy" = "healthy"
+          curl --fail --silent --show-error http://127.0.0.1:3000/ >/dev/null
+          echo "Compose stack started and homepage returned HTTP 200."
