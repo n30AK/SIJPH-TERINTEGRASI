@@ -47,3 +47,5 @@ The additive migration was applied successfully twice (idempotency check) to Neo
 - Applied migrations 003 and 004 to Neon `development-work`; verified four source records and the unique expression index. Migration 003 was re-run and still returned four global source records (idempotency check).
 - No bulk crawling/ingestion, RAG embeddings, model provider, AI analysis runtime, human review UI, auth integration, or production deployment is claimed as complete.
 - CI run status for the latest API commit was not available through the connected workflow-run query; build/typecheck must still be confirmed.
+
+- Added `POST /api/admin/legal/documents`: transactionally inserts document metadata, a pending version, and provision text after schema validation. New content defaults to `unverified`/ `pending`; no automatic legal verification is performed.
