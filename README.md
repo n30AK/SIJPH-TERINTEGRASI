@@ -13,7 +13,7 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - Hosting: terpisah dari database; provider dipilih sesuai dukungan CI/CD, secrets, dan anggaran.
 - Bahasa utama UI: Bahasa Indonesia.
 
-> Status awal: repository sebelumnya kosong dan database belum memiliki tabel aplikasi saat diaudit pada 2026-10-20. Jangan menganggap aplikasi sudah live atau integrasi sudah aktif hanya karena blueprint tersedia.
+> Status per 20 Oktober 2026: repository berisi fondasi Next.js, situs publik, endpoint health/intake, endpoint baca antrean/signage, halaman signage, migrasi database awal, dan proposal pembangunan. Skema Neon production telah diverifikasi memiliki 15 tabel aplikasi. Build lokal belum dapat diverifikasi pada sesi ini karena runner tidak memiliki akses DNS ke GitHub/npm; status CI harus diperiksa pada GitHub Actions. Hosting belum tersambung dan belum ada URL live terverifikasi. Intake publik tetap dinonaktifkan secara default hingga privasi dan kontrol anti-abuse disetujui.
 
 ## Product surfaces
 
