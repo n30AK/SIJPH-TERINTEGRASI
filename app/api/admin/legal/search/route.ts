@@ -14,6 +14,8 @@ const SearchSchema = z.object({
 export async function POST(request: Request) {
   const denied = requireAdmin(request);
   if (denied) return denied;
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (contentLength > 16_000) return NextResponse.json({ error: "Payload terlalu besar." }, { status: 413 });
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "JSON tidak valid." }, { status: 400 }); }
   const parsed = SearchSchema.safeParse(body);
