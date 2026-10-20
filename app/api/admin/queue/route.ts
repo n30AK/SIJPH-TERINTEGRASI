@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       "SELECT COALESCE(MAX(ticket_no::numeric), 0)::text AS max_no FROM queue_tickets WHERE ticket_date = $1::date AND ticket_no ~ '^[0-9]+$'",
       [ticketDate]
     );
-    const nextNumber = BigInt(maxResult.rows[0].max_no as string) + 1n;
+    const nextNumber = BigInt(maxResult.rows[0].max_no as string) + BigInt(1);
     const ticketNo = nextNumber.toString().padStart(3, "0");
     const result = await db.query(
       `INSERT INTO queue_tickets (ticket_date, ticket_no, service_id, counter_id, client_id, visitor_label, priority)
