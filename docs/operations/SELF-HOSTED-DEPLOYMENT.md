@@ -16,6 +16,12 @@ Configure these only in the host's secret/environment settings; never commit rea
 
 The Docker build uses dummy values solely to compile. They are not production credentials and must never be copied into runtime configuration.
 
+## Automated image publication
+
+The workflow `.github/workflows/publish-container.yml` publishes a versioned container image to GitHub Container Registry (GHCR) after a push to `main`, on `v*` tags, or when manually dispatched. The image name is `ghcr.io/n30ak/sijph-terintegrasi`; tags include `main`, the Git tag when applicable, and a short commit SHA. GitHub Actions uses its temporary `GITHUB_TOKEN`; no database credentials are needed to build the image. Check the workflow run before using an image. GHCR package visibility may need to be changed in the GitHub package settings if a public image is desired; do not make it public without confirming that public source distribution is intended.
+
+Publishing an image is **not** the same as deploying a running website. A host/runtime, production secrets, HTTPS, and domain routing are still needed.
+
 ## Build and smoke test
 
 From the repository root on a Docker-capable machine:
