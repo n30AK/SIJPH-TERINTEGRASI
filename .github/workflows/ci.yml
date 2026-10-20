@@ -108,4 +108,9 @@ jobs:
           '
           invalid_transition_status="$(curl --silent --show-error -o /tmp/sijph-invalid-transition.json -w '%{http_code}' -X PATCH http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d "{\"ticketId\":\"$ticket_one_id\",\"action\":\"complete\"}")"
           test "$invalid_transition_status" = "409"
-          echo "Compose stack healthy; PostgreSQL connected; queue numbering and invalid-transition API smoke tests passed."
+          # Legacy numeric labels larger than int32 must not crash ticket issuance.
+          docker compose exec -T db psql -v ON_ERROR_STOP=1 -U sijph -d sijph -c "INSERT INTO queue_tickets (ticket_date, ticket_no) VALUES ((now() AT TIME ZONE 'Asia/Jakarta')::date, '999999999999999999999999999999')" >/dev/null
+          ticket_large="$(curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}')"
+          ticket_large_no="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.ticket_no)' "$ticket_large")"
+          test "$ticket_large_no" = "1000000000000000000000000000000"
+          echo "Compose stack healthy; queue numbering (deleted, concurrent, large legacy labels) and invalid-transition smoke tests passed."
