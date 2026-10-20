@@ -4,6 +4,27 @@ import { Pool } from "pg";
 
 let pool: Pool | undefined;
 
+export function getDatabaseSslConfig(): false | { rejectUnauthorized: boolean } {
+  const mode = process.env.DATABASE_SSL?.trim().toLowerCase();
+  if (mode === "disable") return false;
+  if (mode === "require") {
+    return { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" };
+  }
+
+  const connectionString = process.env.DATABASE_URL;
+  if (connectionString) {
+    try {
+      const host = new URL(connectionString).hostname.toLowerCase();
+      if (["localhost", "127.0.0.1", "::1", "[::1]", "db"].includes(host)) return false;
+    } catch {
+      // Invalid connection strings are reported by the PostgreSQL client when it connects.
+    }
+  }
+
+  // Secure default for managed/remote PostgreSQL (including Neon).
+  return { rejectUnauthorized: true };
+}
+
 export function getDatabasePool(): Pool {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured");
   pool ??= new Pool({
@@ -11,7 +32,7 @@ export function getDatabasePool(): Pool {
     max: 4,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 4_000,
-    ssl: { rejectUnauthorized: true },
+    ssl: getDatabaseSslConfig(),
   });
   return pool;
 }
