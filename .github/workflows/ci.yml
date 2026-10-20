@@ -47,6 +47,7 @@ jobs:
           SIJPH_IMAGE=sijph-terintegrasi:ci
           ENVVARS
           docker compose config --quiet
+          DATABASE_URL=postgresql://ci:ci@db.example.invalid:5432/sijph DATABASE_SSL=require docker compose -f compose.cloud.yaml config --quiet
           cleanup() {
             rc=$?
             if [ "$rc" -ne 0 ]; then
@@ -73,4 +74,6 @@ jobs:
           done
           test "$healthy" = "healthy"
           curl --fail --silent --show-error http://127.0.0.1:3000/ >/dev/null
-          echo "Compose stack started and homepage returned HTTP 200."
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health > /tmp/sijph-health.json
+          grep -q '"database":"connected"' /tmp/sijph-health.json
+          echo "Compose stack started; homepage returned HTTP 200 and PostgreSQL health endpoint confirmed a database connection."
