@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { Pool } from "pg";
-import { requireAdmin } from "@/lib/server/admin-api";
+import { getDatabasePool, requireAdmin } from "@/lib/server/admin-api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-let pool: Pool | undefined;
 const REQUIRED_TABLES = [
   "organizations", "clients", "service_catalog", "service_requests",
   "privacy_consents", "service_request_events", "app_users", "roles",
@@ -38,13 +36,7 @@ export async function GET(request: Request) {
 
   if (!process.env.DATABASE_URL) return response(false);
   try {
-    pool ??= new Pool({
-      connectionString: process.env.DATABASE_URL,
-      max: 2,
-      idleTimeoutMillis: 5_000,
-      connectionTimeoutMillis: 3_000,
-      ssl: { rejectUnauthorized: true },
-    });
+    const pool = getDatabasePool();
     const tableResult = await pool.query(
       "SELECT name, to_regclass('public.' || name) IS NOT NULL AS present FROM unnest($1::text[]) AS name",
       [REQUIRED_TABLES]
