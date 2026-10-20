@@ -13,7 +13,7 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - Hosting: terpisah dari database; provider dipilih sesuai dukungan CI/CD, secrets, dan anggaran.
 - Bahasa utama UI: Bahasa Indonesia.
 
-> Status per 20 Oktober 2026: repository berisi fondasi Next.js, situs publik, endpoint health/intake, endpoint baca antrean/signage, halaman signage, migrasi database awal, dan proposal pembangunan. Skema Neon production telah diverifikasi memiliki 15 tabel aplikasi. Build lokal belum dapat diverifikasi pada sesi ini karena runner tidak memiliki akses DNS ke GitHub/npm; status CI harus diperiksa pada GitHub Actions. Hosting belum tersambung dan belum ada URL live terverifikasi. Intake publik tetap dinonaktifkan secara default hingga privasi dan kontrol anti-abuse disetujui.
+> Status per 20 Oktober 2026: repository berisi fondasi Next.js, situs publik, endpoint health/intake, endpoint baca antrean/signage, halaman signage, migrasi database awal, dan proposal pembangunan. Skema Neon production telah diverifikasi memiliki 24 tabel setelah migrasi fondasi legal/AI 002–004 diterapkan. Build lokal belum dapat diverifikasi pada sesi ini karena runner tidak memiliki akses DNS ke GitHub/npm; status CI harus diperiksa pada GitHub Actions. Hosting belum tersambung dan belum ada URL live terverifikasi. Intake publik tetap dinonaktifkan secara default hingga privasi dan kontrol anti-abuse disetujui.
 
 ## Version 2.0 baseline documents
 
@@ -22,9 +22,9 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - [Official Proposal v2.0](docs/product/PROPOSAL-RESMI-V2.md)
 - [AI Multi-Agent Contracts](docs/architecture/AI-MULTI-AGENT-CONTRACTS.md)
 - [Implementation Audit — 20 October 2026](docs/operations/IMPLEMENTATION-AUDIT-2026-10-20.md)
-- [Legal knowledge and AI foundation migration](database/migrations/002_legal_knowledge_ai_foundation.sql) — applied and re-run idempotently on Neon `development-work`; not applied to production.
-- [Official legal source seed](database/migrations/003_seed_official_legal_sources.sql) — four official source endpoints seeded and re-run idempotently on `development-work`.
-- [Global legal source uniqueness](database/migrations/004_legal_source_global_uniqueness.sql) — applied on `development-work`.
+- [Legal knowledge and AI foundation migration](database/migrations/002_legal_knowledge_ai_foundation.sql) — applied and re-run idempotently on Neon `development-work`, then applied to production after successful development verification.
+- [Official legal source seed](database/migrations/003_seed_official_legal_sources.sql) — four official source endpoints seeded on `development-work` and production; registry entries are not ingested legal documents.
+- [Global legal source uniqueness](database/migrations/004_legal_source_global_uniqueness.sql) — applied on `development-work` and production.
 - [Legal Knowledge API guide](docs/operations/LEGAL-KNOWLEDGE-API.md) — admin-only registry, document ingestion, and search endpoints.
 - [Human Review API](docs/operations/HUMAN-REVIEW-API.md) — review queue and human decisions for AI analysis runs.
 - [Legal Status Verification](docs/operations/LEGAL-STATUS-VERIFICATION.md) — manual verification workflow for official legal source versions and legal status.
