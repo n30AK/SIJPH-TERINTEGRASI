@@ -43,3 +43,26 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Smoke-test published container
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:sha-${GITHUB_SHA::7}"
+          docker pull "$image"
+          docker run -d --name sijph-smoke -p 3000:3000 \
+            -e DATABASE_URL="postgresql://smoke:smoke@127.0.0.1:5432/smoke" \
+            -e SIJPH_ADMIN_API_KEY="smoke-test-only-not-a-secret" \
+            -e PUBLIC_INTAKE_ENABLED="false" \
+            "$image"
+          cleanup() { docker logs sijph-smoke || true; docker rm -f sijph-smoke >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            code="$(curl --silent --output /tmp/sijph-home.html --write-out '%{http_code}' http://127.0.0.1:3000/ || true)"
+            if [ "$code" = "200" ]; then
+              echo "Container served homepage successfully."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container did not serve homepage with HTTP 200."
+          exit 1
