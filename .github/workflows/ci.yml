@@ -26,3 +26,25 @@ jobs:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/sijph
       - name: Verify production container builds
         run: docker build --tag sijph-terintegrasi:ci .
+      - name: Validate offline installer scripts and Compose configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/build-offline-bundle.sh scripts/install-offline-bundle.sh
+          cat > .env <<'ENVVARS'
+          POSTGRES_PASSWORD=ci-placeholder-password
+          SIJPH_ADMIN_API_KEY=ci-placeholder-admin-key
+          DATA_CONTROLLER_NAME=CI Placeholder
+          PRIVACY_CONTACT_EMAIL=ci@example.invalid
+          PRIVACY_NOTICE_VERSION=ci-test
+          PUBLIC_INTAKE_ENABLED=false
+          AI_PROVIDER=openai-compatible
+          AI_API_BASE_URL=https://api.openai.com/v1
+          AI_API_KEY=
+          AI_MODEL=
+          NEXT_PUBLIC_APP_URL=http://localhost:3000
+          SIJPH_PORT=3000
+          SIJPH_IMAGE=sijph-terintegrasi:ci
+          ENVVARS
+          docker compose config --quiet
+          rm -f .env
