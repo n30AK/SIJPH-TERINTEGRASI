@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./companion-overrides.css";
 import VoiceCompanion from "./components/VoiceCompanion";
 
 export const metadata: Metadata = {
