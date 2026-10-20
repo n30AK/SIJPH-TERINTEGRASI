@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       `INSERT INTO legal_sources
        (source_key, title, publisher, source_type, canonical_url, jurisdiction, subject_tags, usage_rights, trust_tier)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       ON CONFLICT (organization_id, source_key) DO UPDATE SET
+       ON CONFLICT ((COALESCE(organization_id, '00000000-0000-0000-0000-000000000000'::uuid)), source_key) DO UPDATE SET
          title = EXCLUDED.title, publisher = EXCLUDED.publisher, source_type = EXCLUDED.source_type,
          canonical_url = EXCLUDED.canonical_url, jurisdiction = EXCLUDED.jurisdiction,
          subject_tags = EXCLUDED.subject_tags, usage_rights = EXCLUDED.usage_rights,
