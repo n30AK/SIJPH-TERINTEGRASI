@@ -10,7 +10,7 @@ const SourceSchema = z.object({
   title: z.string().trim().min(2).max(240),
   publisher: z.string().trim().min(2).max(240),
   sourceType: z.enum(["regulation_portal", "court_decision", "official_jdih", "internal_policy", "secondary_source", "other"]),
-  canonicalUrl: z.url().max(2048),
+  canonicalUrl: z.url().max(2048).refine((value) => value.startsWith("https://"), "URL sumber wajib HTTPS."),
   jurisdiction: z.string().trim().max(200).optional(),
   subjectTags: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
   usageRights: z.string().trim().max(1000).optional(),
