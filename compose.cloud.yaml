@@ -1,0 +1,30 @@
+name: sijph-terintegrasi-cloud
+
+services:
+  app:
+    image: ${SIJPH_IMAGE:-sijph-terintegrasi:offline}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL to the approved managed PostgreSQL URL}
+      DATABASE_SSL: ${DATABASE_SSL:-require}
+      SIJPH_ADMIN_API_KEY: ${SIJPH_ADMIN_API_KEY:?Set SIJPH_ADMIN_API_KEY in .env}
+      DATA_CONTROLLER_NAME: ${DATA_CONTROLLER_NAME:-}
+      PRIVACY_CONTACT_EMAIL: ${PRIVACY_CONTACT_EMAIL:-}
+      PRIVACY_NOTICE_VERSION: ${PRIVACY_NOTICE_VERSION:-2026-10-20-v1}
+      PUBLIC_INTAKE_ENABLED: ${PUBLIC_INTAKE_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
+      AI_API_BASE_URL: ${AI_API_BASE_URL:-https://api.openai.com/v1}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    ports:
+      - "127.0.0.1:${SIJPH_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
