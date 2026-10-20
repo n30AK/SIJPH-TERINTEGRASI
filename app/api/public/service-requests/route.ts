@@ -22,6 +22,9 @@ function getPool() {
 }
 
 export async function POST(request: Request) {
+  if (process.env.PUBLIC_INTAKE_ENABLED !== "true") {
+    return NextResponse.json({ error: "Permohonan online belum diaktifkan oleh pengelola. Silakan hubungi kanal resmi organisasi." }, { status: 503 });
+  }
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (contentLength > 20_000) return NextResponse.json({ error: "Ukuran permohonan terlalu besar." }, { status: 413 });
   let input: unknown;
@@ -39,6 +42,10 @@ export async function POST(request: Request) {
         [parsed.data.fullName, parsed.data.email, parsed.data.phone]
       );
       const reference = "SJ-" + new Date().toISOString().slice(0, 10).replaceAll("-", "") + "-" + crypto.randomUUID().slice(0, 8).toUpperCase();
+      await client.query(
+        "INSERT INTO privacy_consents (client_id, purpose, notice_version, source) VALUES ($1, $2, $3, 'public_web')",
+        [clientInsert.rows[0].id, "initial_service_request_review", "development-v1"]
+      );
       const result = await client.query(
         "INSERT INTO service_requests (reference_no, client_id, service_id, title, description, channel, status) VALUES ($1, $2, $3, $4, $5, 'web', 'submitted') RETURNING id, reference_no, status, created_at",
         [reference, clientInsert.rows[0].id, service.rows[0].id, "Permohonan " + parsed.data.serviceCode, parsed.data.summary]
