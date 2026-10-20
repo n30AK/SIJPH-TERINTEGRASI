@@ -30,7 +30,7 @@ Keputusan: `approved`, `rejected`, atau `revision_requested`. Reviewer harus sud
 
 ## Batasan penting
 
-- Endpoint ini belum menggantikan otorisasi berbasis organisasi/peran. Sebelum penggunaan multi-tenant atau produksi, wajib mengikat reviewer ke organisasi/case dan memeriksa role khusus reviewer.
+- Endpoint memeriksa peran reviewer/admin/super_admin dan mencatat keputusan ke audit log. Namun, header API key tetap menjadi gerbang administratif bersama; sebelum produksi, ganti/komplemen dengan sesi autentikasi individual, kebijakan RBAC terpusat, serta uji pembatasan organisasi dan perkara.
 - Header API key adalah kontrol administratif sementara, bukan pengganti sesi pengguna yang terautentikasi dan RBAC.
 - Jangan menandai analisis sebagai benar hanya karena disetujui; verifikasi sumber primer, tanggal/status berlaku, kutipan, fakta, yurisdiksi, dan ketidakpastian secara terpisah.
 - API tidak mengirim jawaban AI kepada klien akhir dan tidak membuat klaim tentang peluang menang.
