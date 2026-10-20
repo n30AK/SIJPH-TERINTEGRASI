@@ -90,12 +90,10 @@ export async function PATCH(request: Request) {
   try {
     const result = await getDatabasePool().query(
       `UPDATE signage_items
-       SET status = $1,
-           approved_by = CASE WHEN $2::boolean THEN NULL ELSE approved_by END,
-           updated_at = now()
-       WHERE id = $3::uuid AND status = ANY($4::text[])
+       SET status = $1, updated_at = now()
+       WHERE id = $2::uuid AND status = ANY($3::text[])
        RETURNING id, title, status, updated_at`,
-      [transition.to, input.action === "approve", input.itemId, transition.from]
+      [transition.to, input.itemId, transition.from]
     );
     if (!result.rowCount) {
       return NextResponse.json({ error: "Konten tidak ditemukan atau perubahan status tidak diizinkan." }, { status: 409 });
