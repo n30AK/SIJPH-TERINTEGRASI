@@ -67,11 +67,13 @@ export async function POST(request: Request) {
     await db.query("SELECT pg_advisory_xact_lock(hashtext('sijph-queue-ticket-number'))");
     const dateResult = await db.query("SELECT (now() AT TIME ZONE 'Asia/Jakarta')::date AS ticket_date");
     const ticketDate = dateResult.rows[0].ticket_date as string;
-    const countResult = await db.query(
-      "SELECT count(*)::int AS count FROM queue_tickets WHERE ticket_date = $1::date",
+    // Count is unsafe here: deleted tickets would allow numbers to be reused.
+    // Only numeric ticket labels are part of this sequence.
+    const maxResult = await db.query(
+      "SELECT COALESCE(MAX(ticket_no::int), 0)::int AS max_no FROM queue_tickets WHERE ticket_date = $1::date AND ticket_no ~ '^[0-9]+$'",
       [ticketDate]
     );
-    const ticketNo = String(Number(countResult.rows[0].count) + 1).padStart(3, "0");
+    const ticketNo = String(Number(maxResult.rows[0].max_no) + 1).padStart(3, "0");
     const result = await db.query(
       `INSERT INTO queue_tickets (ticket_date, ticket_no, service_id, counter_id, client_id, visitor_label, priority)
        VALUES ($1::date, $2, $3, $4, $5, $6, $7)
