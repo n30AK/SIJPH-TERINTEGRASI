@@ -22,7 +22,7 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - [Official Proposal v2.0](docs/product/PROPOSAL-RESMI-V2.md)
 - [AI Multi-Agent Contracts](docs/architecture/AI-MULTI-AGENT-CONTRACTS.md)
 - [Implementation Audit — 20 October 2026](docs/operations/IMPLEMENTATION-AUDIT-2026-10-20.md)
-- [Legal knowledge and AI foundation migration draft](database/migrations/002_legal_knowledge_ai_foundation.sql) — draft only, not applied to Neon.
+- [Legal knowledge and AI foundation migration](database/migrations/002_legal_knowledge_ai_foundation.sql) — applied and re-run idempotently on Neon `development-work`; not applied to production.
 
 ## Product surfaces
 
