@@ -24,6 +24,12 @@ Secara default output ditulis ke `dist/offline/`. Hasilnya:
 
 Skrip membangun image aplikasi, mengambil image PostgreSQL, menyimpan kedua image ke `images.tar`, memasukkan migrasi dan konfigurasi deployment, lalu membuat checksum isi bundle. Gunakan versi yang jelas dan simpan artefak serta commit SHA yang cocok untuk audit.
 
+## Rilis bundle melalui GitHub Actions
+
+Workflow `.github/workflows/offline-bundle-release.yml` disiapkan untuk membangun bundle pada tag versi `v*` atau melalui `workflow_dispatch`. Setelah workflow lulus, bundle dan checksum diterbitkan sebagai aset GitHub Release. Workflow belum membuktikan instalasi di server klien; verifikasi checksum, instalasi bersih offline, backup/restore, dan acceptance test tetap wajib.
+
+Untuk rilis bertag, buat dan push tag versi hanya setelah commit yang dimaksud ditinjau dan CI lulus. Jangan membuat tag rilis produksi hanya untuk menguji workflow pada kode yang belum diterima.
+
 ## Memindahkan dan memasang
 1. Salin archive dan sidecar checksum ke server institusi melalui media yang disetujui.
 2. Verifikasi integritas archive sebelum mengekstrak:
