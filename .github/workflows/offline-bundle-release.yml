@@ -1,0 +1,58 @@
+name: Build Offline Installer Release
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example v0.2.0
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: sijph-offline-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Build offline bundle
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${VERSION_INPUT:-$GITHUB_REF_NAME}"
+          if [[ ! "$VERSION" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "Invalid release version." >&2
+            exit 1
+          fi
+          bash scripts/build-offline-bundle.sh "$VERSION"
+          echo "BUNDLE_VERSION=$VERSION" >> "$GITHUB_ENV"
+      - name: Verify archive checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist/offline
+          sha256sum --check "sijph-terintegrasi-offline-$BUNDLE_VERSION.tar.gz.sha256"
+      - name: Publish bundle and checksum to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE="dist/offline/sijph-terintegrasi-offline-$BUNDLE_VERSION.tar.gz"
+          CHECKSUM="$ARCHIVE.sha256"
+          if gh release view "$BUNDLE_VERSION" >/dev/null 2>&1; then
+            gh release upload "$BUNDLE_VERSION" "$ARCHIVE" "$CHECKSUM" --clobber
+          else
+            gh release create "$BUNDLE_VERSION" "$ARCHIVE" "$CHECKSUM" \
+              --target "$GITHUB_SHA" \
+              --title "SIJPH-TERINTEGRASI $BUNDLE_VERSION" \
+              --notes "Offline installer bundle generated from commit $GITHUB_SHA. Verify the SHA-256 checksum before installation. This release artifact is not a substitute for client acceptance, security review, or environment-specific testing."
+          fi

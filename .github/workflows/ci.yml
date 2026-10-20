@@ -11,7 +11,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,3 +26,54 @@ jobs:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/sijph
       - name: Verify production container builds
         run: docker build --tag sijph-terintegrasi:ci .
+      - name: Validate offline installer scripts and Compose configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/build-offline-bundle.sh scripts/install-offline-bundle.sh
+          cat > .env <<'ENVVARS'
+          POSTGRES_PASSWORD=ci-placeholder-password
+          SIJPH_ADMIN_API_KEY=ci-placeholder-admin-key
+          DATA_CONTROLLER_NAME=CI Placeholder
+          PRIVACY_CONTACT_EMAIL=ci@example.invalid
+          PRIVACY_NOTICE_VERSION=ci-test
+          PUBLIC_INTAKE_ENABLED=false
+          AI_PROVIDER=openai-compatible
+          AI_API_BASE_URL=https://api.openai.com/v1
+          AI_API_KEY=
+          AI_MODEL=
+          NEXT_PUBLIC_APP_URL=http://localhost:3000
+          SIJPH_PORT=3000
+          SIJPH_IMAGE=sijph-terintegrasi:ci
+          ENVVARS
+          docker compose config --quiet
+          DATABASE_URL=postgresql://ci:ci@db.example.invalid:5432/sijph DATABASE_SSL=require docker compose -f compose.cloud.yaml config --quiet
+          cleanup() {
+            rc=$?
+            if [ "$rc" -ne 0 ]; then
+              docker compose ps || true
+              docker compose logs --tail=200 || true
+            fi
+            docker compose down -v || true
+            rm -f .env
+            exit "$rc"
+          }
+          trap cleanup EXIT
+          docker compose up -d
+          app_id=""
+          healthy=""
+          for attempt in $(seq 1 60); do
+            app_id="$(docker compose ps -q app)"
+            if [ -n "$app_id" ]; then
+              healthy="$(docker inspect --format '{{.State.Health.Status}}' "$app_id" 2>/dev/null || true)"
+              if [ "$healthy" = "healthy" ]; then
+                break
+              fi
+            fi
+            sleep 2
+          done
+          test "$healthy" = "healthy"
+          curl --fail --silent --show-error http://127.0.0.1:3000/ >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/health > /tmp/sijph-health.json
+          grep -q '"database":"connected"' /tmp/sijph-health.json
+          echo "Compose stack started; homepage returned HTTP 200 and PostgreSQL health endpoint confirmed a database connection."

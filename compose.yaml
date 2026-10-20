@@ -1,0 +1,63 @@
+name: sijph-terintegrasi
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sijph
+      POSTGRES_USER: sijph
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - sijph_db_data:/var/lib/postgresql/data
+      # PostgreSQL runs these SQL files only when initializing an EMPTY data directory.
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sijph -d sijph"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    networks:
+      - private
+
+  app:
+    image: ${SIJPH_IMAGE:-sijph-terintegrasi:offline}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgresql://sijph:${POSTGRES_PASSWORD}@db:5432/sijph
+      DATABASE_SSL: disable
+      SIJPH_ADMIN_API_KEY: ${SIJPH_ADMIN_API_KEY:?Set SIJPH_ADMIN_API_KEY in .env}
+      DATA_CONTROLLER_NAME: ${DATA_CONTROLLER_NAME:-}
+      PRIVACY_CONTACT_EMAIL: ${PRIVACY_CONTACT_EMAIL:-}
+      PRIVACY_NOTICE_VERSION: ${PRIVACY_NOTICE_VERSION:-2026-10-20-v1}
+      PUBLIC_INTAKE_ENABLED: ${PUBLIC_INTAKE_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-openai-compatible}
+      AI_API_BASE_URL: ${AI_API_BASE_URL:-https://api.openai.com/v1}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    ports:
+      # Keep private by default. Configure a trusted HTTPS reverse proxy for LAN/WAN access.
+      - "127.0.0.1:${SIJPH_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - private
+
+networks:
+  private:
+    driver: bridge
+
+volumes:
+  sijph_db_data:
