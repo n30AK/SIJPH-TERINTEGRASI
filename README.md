@@ -26,6 +26,8 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - [Official legal source seed](database/migrations/003_seed_official_legal_sources.sql) — four official source endpoints seeded and re-run idempotently on `development-work`.
 - [Global legal source uniqueness](database/migrations/004_legal_source_global_uniqueness.sql) — applied on `development-work`.
 - [Legal Knowledge API guide](docs/operations/LEGAL-KNOWLEDGE-API.md) — admin-only registry, document ingestion, and search endpoints.
+- [Human Review API](docs/operations/HUMAN-REVIEW-API.md) — review queue and human decisions for AI analysis runs.
+- [Legal Status Verification](docs/operations/LEGAL-STATUS-VERIFICATION.md) — manual verification workflow for official legal source versions and legal status.
 
 ## Product surfaces
 
