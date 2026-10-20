@@ -28,6 +28,9 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - [Legal Knowledge API guide](docs/operations/LEGAL-KNOWLEDGE-API.md) — admin-only registry, document ingestion, and search endpoints.
 - [Human Review API](docs/operations/HUMAN-REVIEW-API.md) — review queue and human decisions for AI analysis runs.
 - [Legal Status Verification](docs/operations/LEGAL-STATUS-VERIFICATION.md) — manual verification workflow for official legal source versions and legal status.
+- [Commercial Go-Live Checklist](docs/operations/COMMERCIAL-GO-LIVE-CHECKLIST.md) — production gates for privacy, security, migrations, AI safety, and operations.
+- [Readiness Endpoint](app/api/ready/route.ts) — fail-closed runtime gate; returns HTTP 200 only when configured launch requirements pass.
+- [Environment Template](.env.example) — names of runtime settings; contains no credentials.
 
 ## Product surfaces
 
