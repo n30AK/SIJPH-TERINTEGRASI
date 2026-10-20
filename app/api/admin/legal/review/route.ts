@@ -61,14 +61,25 @@ export async function POST(request: Request) {
   if (!client) return NextResponse.json({ error: "Database belum tersedia." }, { status: 503 });
   try {
     await client.query("BEGIN");
-    const reviewer = await client.query("SELECT id FROM app_users WHERE id = $1 LIMIT 1", [review.reviewerUserId]);
+    const reviewer = await client.query(
+      `SELECT u.id FROM app_users u
+       WHERE u.id = $1 AND u.status = 'active'
+         AND EXISTS (
+           SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id
+           WHERE ur.user_id = u.id AND r.code IN ('reviewer', 'admin', 'super_admin')
+             AND (ur.organization_id = (SELECT organization_id FROM ai_analysis_runs WHERE id = $2)
+                  OR (SELECT organization_id FROM ai_analysis_runs WHERE id = $2) IS NULL)
+         )
+       LIMIT 1`,
+      [review.reviewerUserId, review.runId]
+    );
     if (!reviewer.rowCount) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Reviewer tidak ditemukan." }, { status: 422 });
     }
     const updated = await client.query(
       `UPDATE ai_analysis_runs
-       SET status = CASE $3
+       SET status = CASE $3::text
              WHEN 'approved' THEN 'approved'
              WHEN 'rejected' THEN 'rejected'
              ELSE 'needs_human_review'
@@ -88,6 +99,11 @@ export async function POST(request: Request) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Analisis tidak ditemukan atau statusnya tidak dapat direview." }, { status: 404 });
     }
+    await client.query(
+      `INSERT INTO audit_events (actor_user_id, action, entity_type, entity_id, metadata)
+       VALUES ($1, 'legal.analysis.reviewed', 'ai_analysis_run', $2, $3::jsonb)`,
+      [review.reviewerUserId, review.runId, JSON.stringify({ decision: review.decision })]
+    );
     await client.query("COMMIT");
     return NextResponse.json({
       review: updated.rows[0],
