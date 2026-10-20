@@ -25,7 +25,7 @@ Platform pelayanan hukum profesional dengan website publik, portal klien, worksp
 - [Legal knowledge and AI foundation migration](database/migrations/002_legal_knowledge_ai_foundation.sql) — applied and re-run idempotently on Neon `development-work`; not applied to production.
 - [Official legal source seed](database/migrations/003_seed_official_legal_sources.sql) — four official source endpoints seeded and re-run idempotently on `development-work`.
 - [Global legal source uniqueness](database/migrations/004_legal_source_global_uniqueness.sql) — applied on `development-work`.
-- [Legal Knowledge API guide](docs/operations/LEGAL-KNOWLEDGE-API.md) — admin-only registry/search endpoints and limitations.
+- [Legal Knowledge API guide](docs/operations/LEGAL-KNOWLEDGE-API.md) — admin-only registry, document ingestion, and search endpoints.
 
 ## Product surfaces
 
