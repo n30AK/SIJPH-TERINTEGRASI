@@ -26,7 +26,7 @@ jobs:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/sijph
       - name: Verify production container builds
         run: docker build --tag sijph-terintegrasi:ci .
-      - name: Validate offline installer scripts and Compose configuration
+      - name: Validate offline installer and run queue API smoke tests
         shell: bash
         run: |
           set -euo pipefail
@@ -76,4 +76,20 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:3000/ >/dev/null
           curl --fail --silent --show-error http://127.0.0.1:3000/api/health > /tmp/sijph-health.json
           grep -q '"database":"connected"' /tmp/sijph-health.json
-          echo "Compose stack started; homepage returned HTTP 200 and PostgreSQL health endpoint confirmed a database connection."
+          admin_header='x-sijph-admin-key: ci-placeholder-admin-key'
+          ticket_one="$(curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}')"
+          ticket_one_no="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.ticket_no)' "$ticket_one")"
+          ticket_one_id="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.id)' "$ticket_one")"
+          test "$ticket_one_no" = "001"
+          ticket_two="$(curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}')"
+          ticket_two_no="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.ticket_no)' "$ticket_two")"
+          ticket_two_id="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.id)' "$ticket_two")"
+          test "$ticket_two_no" = "002"
+          # A deleted ticket must not cause its number to be reused.
+          docker compose exec -T db psql -v ON_ERROR_STOP=1 -U sijph -d sijph -c "DELETE FROM queue_tickets WHERE id = '$ticket_two_id'" >/dev/null
+          ticket_three="$(curl --fail --silent --show-error -X POST http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d '{}')"
+          ticket_three_no="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).ticket.ticket_no)' "$ticket_three")"
+          test "$ticket_three_no" = "003"
+          invalid_transition_status="$(curl --silent --show-error -o /tmp/sijph-invalid-transition.json -w '%{http_code}' -X PATCH http://127.0.0.1:3000/api/admin/queue -H "$admin_header" -H 'content-type: application/json' -d "{\"ticketId\":\"$ticket_one_id\",\"action\":\"complete\"}")"
+          test "$invalid_transition_status" = "409"
+          echo "Compose stack healthy; PostgreSQL connected; queue numbering and invalid-transition API smoke tests passed."
