@@ -39,9 +39,12 @@ export function getDatabasePool(): Pool {
 
 export function requireAdmin(request: Request): NextResponse | null {
   const expected = process.env.SIJPH_ADMIN_API_KEY;
-  const provided = request.headers.get("x-sijph-admin-key");
-  if (!expected || !provided) {
+  if (!expected) {
     return NextResponse.json({ error: "Akses administratif tidak dikonfigurasi." }, { status: 503 });
+  }
+  const provided = request.headers.get("x-sijph-admin-key");
+  if (!provided) {
+    return NextResponse.json({ error: "Akses tidak diizinkan." }, { status: 401 });
   }
   const expectedBuffer = Buffer.from(expected);
   const providedBuffer = Buffer.from(provided);
